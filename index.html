@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Heirs of the Vale</title>
+<style>
+:root{
+  --bg:#17141f; --panel:#231e2e; --panel2:#2d2639; --line:#41384f; --ink:#efe6d4; --dim:#a79cb3;
+  --gold:#e3b54f; --accent:#7fb2ff; --good:#7bd389; --bad:#ff7a6b; --warn:#f0c060;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:14px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden}
+button{font:inherit;color:inherit;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 12px;min-height:40px;cursor:pointer}
+button:disabled{opacity:.4;cursor:default}
+button.primary{background:#5b3fa0;border-color:#7a5cc4}
+button.gold{background:#7a5a17;border-color:var(--gold)}
+#app{display:flex;flex-direction:column;height:100dvh;max-width:1100px;margin:0 auto}
+header{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+header .date{font-weight:700;color:var(--gold);white-space:nowrap}
+.res{display:flex;gap:10px;flex-wrap:wrap;font-variant-numeric:tabular-nums}
+.res span{background:var(--panel);padding:3px 8px;border-radius:8px;white-space:nowrap}
+nav{display:flex;gap:6px;padding:6px 12px;overflow-x:auto}
+nav button{flex:0 0 auto}
+nav button.on{background:#5b3fa0;border-color:#7a5cc4}
+main{flex:1;overflow:auto;padding:8px 12px 12px}
+footer{display:flex;gap:8px;padding:8px 12px calc(8px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
+footer .log{flex:1;color:var(--dim);font-size:12px;overflow:hidden;max-height:40px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px}
+.card h3{margin:0 0 4px;font-size:15px}
+.muted{color:var(--dim);font-size:12px}
+.row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.tag{font-size:11px;padding:2px 6px;border-radius:6px;background:var(--panel2);border:1px solid var(--line)}
+.tag.dead{color:var(--bad)} .tag.wound{color:var(--warn)} .tag.trait{color:var(--gold)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:2px 8px;font-size:12px;color:var(--dim);margin:6px 0}
+.stats b{color:var(--ink)}
+select{font:inherit;color:inherit;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px;min-height:36px}
+.gen{margin-bottom:12px}
+.gen h4{margin:4px 0;color:var(--gold)}
+.tree{display:flex;flex-wrap:wrap;gap:6px}
+.chip{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--c,#888);border-radius:8px;padding:5px 8px;font-size:12px}
+.chip.dead{opacity:.55}
+.squad label{display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
+.squad input{width:22px;height:22px}
+/* modal */
+#modal{position:fixed;inset:0;background:#0009;display:none;align-items:center;justify-content:center;z-index:50;padding:12px}
+#modal .box{background:var(--panel);border:1px solid var(--line);border-radius:14px;max-width:520px;width:100%;max-height:90dvh;overflow:auto;padding:14px}
+#modal h2{margin:0 0 8px;color:var(--gold);font-size:18px}
+#modal .btns{display:flex;gap:8px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap}
+#modal ul{padding-left:18px;margin:6px 0}
+/* battle */
+#battle{position:fixed;inset:0;display:none;background:radial-gradient(ellipse at 50% 30%,#3a3555,#16131d 75%);z-index:20}
+#cv{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+#turnbar{position:absolute;top:calc(6px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);display:flex;gap:4px;pointer-events:none}
+.tb{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;border:2px solid;background:#000a}
+.tb.P{border-color:var(--accent)} .tb.E{border-color:var(--bad)} .tb.now{transform:scale(1.25);margin-right:6px}
+#ucard{position:absolute;left:calc(8px + env(safe-area-inset-left));bottom:8px;background:#1d1828e6;border:1px solid var(--line);border-radius:12px;padding:8px 10px;min-width:170px;max-width:220px;font-size:12px}
+#ucard .nm{font-weight:700;font-size:14px}
+.bar{height:6px;border-radius:3px;background:#0006;margin:3px 0;overflow:hidden}
+.bar i{display:block;height:100%}
+#cmd{position:absolute;right:calc(8px + env(safe-area-inset-right));top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:6px;width:132px}
+#cmd button{min-height:44px;background:#2d2639ee}
+#cmd .facepad{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+#msg{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);background:#1d1828e6;border:1px solid var(--line);border-radius:10px;padding:6px 12px;font-size:13px;max-width:52vw;text-align:center;display:none}
+#rot{display:none}
+@media (max-height:500px){
+  #ucard{min-width:0;max-width:150px;padding:5px 8px;font-size:11px;bottom:6px}
+  #ucard .nm{font-size:12px} #ucard .muted{display:none}
+  #cmd{width:118px} #cmd button{min-height:40px;padding:6px 8px}
+  #msg{font-size:12px;bottom:6px}
+}
+@media (orientation:portrait) and (max-width:600px){ #rot{display:block;position:absolute;top:44px;left:50%;transform:translateX(-50%);font-size:12px;color:var(--dim);background:#000a;padding:4px 8px;border-radius:8px} }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="date" id="date"></div>
+    <div class="res" id="res"></div>
+  </header>
+  <nav id="tabs"></nav>
+  <main id="main"></main>
+  <footer>
+    <div class="log" id="log"></div>
+    <button class="gold" id="endSeason">End Season ▸</button>
+  </footer>
+</div>
+
+<div id="battle">
+  <canvas id="cv"></canvas>
+  <div id="turnbar"></div>
+  <div id="rot">Rotate your phone to landscape for battles</div>
+  <div id="ucard"></div>
+  <div id="cmd"></div>
+  <div id="msg"></div>
+</div>
+
+<div id="modal"><div class="box" id="mbox"></div></div>
+
+<script>
+'use strict';
+/* =========================================================
+   HEIRS OF THE VALE — prototype
+   Modules mirror the planned Godot autoloads:
+   TimeManager · Dynasty · Economy · Town · Battle (Grid/TurnQueue/Combat/AI/Anim)
+   ========================================================= */
+const $ = s => document.querySelector(s);
+const rnd = (a,b) => a + Math.floor(Math.random()*(b-a+1));
+const pick = a => a[Math.floor(Math.random()*a.length)];
+const chance = p => Math.random() < p;
+const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const lerp = (a,b,t) => a + (b-a)*t;
+
+/* ---------------- DATA ---------------- */
+const SEASONS = ['Spring','Summer','Autumn','Winter'];
+const FARM_MULT = [0.5, 1, 1.5, 0];
+const MN = ['Aldric','Bram','Corwin','Doran','Edric','Fenn','Garrick','Hal','Ivo','Jory','Kael','Lorne','Merek','Niall','Osric','Perrin','Quill','Rowan','Soren','Tam','Ulric','Varis','Wyn','Yorick'];
+const FN = ['Ada','Brina','Cora','Delia','Elin','Faye','Gwen','Hilde','Isla','Juna','Kira','Lys','Mira','Nessa','Orla','Petra','Rhea','Sela','Tilda','Una','Vela','Wren','Yara','Zia'];
+const HAIR = ['#3b2a20','#6b4426','#c79a4b','#e6d27a','#a33b2a','#222','#d9d9d9','#4a3b6b'];
+
+const CLASSES = {
+  Warden:  {color:'#3b6fd6', hp:32, atk:11, def:7, mag:3,  spd:6,  move:4, jump:2, rmin:1, rmax:1, need:null,
+            desc:'Sword & shield frontliner',
+            skill:{name:'Shield Bash', ap:2, type:'phys', power:1.3, rmin:1, rmax:1, delay:40, desc:'Hit + delay target\'s next turn'}},
+  Ranger:  {color:'#3e9a4a', hp:26, atk:10, def:4, mag:3,  spd:8,  move:4, jump:3, rmin:2, rmax:4, need:null,
+            desc:'Bow; +range from high ground',
+            skill:{name:'Aimed Shot', ap:2, type:'phys', power:1.6, rmin:2, rmax:5, hitMod:-10, desc:'Strong long shot'}},
+  Mender:  {color:'#e0b84a', hp:24, atk:5,  def:3, mag:9,  spd:7,  move:3, jump:2, rmin:1, rmax:1, need:'chapel',
+            desc:'Healer',
+            skill:{name:'Cure', ap:2, type:'heal', power:1.6, rmin:0, rmax:3, desc:'Restore HP to an ally'}},
+  Arcanist:{color:'#8a4fd0', hp:20, atk:4,  def:2, mag:12, spd:6,  move:3, jump:2, rmin:1, rmax:1, need:'tower',
+            desc:'Area fire magic',
+            skill:{name:'Fireburst', ap:3, type:'mag', power:1.5, rmin:1, rmax:4, aoe:1, desc:'Burns a + shaped area (friendly fire!)'}},
+  Vagrant: {color:'#c0504d', hp:24, atk:9,  def:3, mag:3,  spd:10, move:5, jump:4, rmin:1, rmax:1, need:'barracks',
+            desc:'Fast flanker',
+            skill:{name:'Backstab', ap:2, type:'phys', power:1.2, rmin:1, rmax:1, backMult:2, desc:'×2 damage from behind'}},
+};
+/* Action Points: every unit holds up to AP_MAX. Battles start at AP_START.
+   +1 AP at the start of each turn, +1 more if the unit didn't act last turn.
+   Basic Attack is free; class skills spend AP. */
+const AP_MAX = 5, AP_START = 2;
+const ENEMY_COLOR = {Warden:'#8e3b3b', Ranger:'#7a5a2a', Arcanist:'#5a2f5a', Vagrant:'#4a2a2a', Mender:'#8a7a5a'};
+const ENEMY_NAMES = {Warden:'Brigand', Ranger:'Poacher', Arcanist:'Hedge Witch', Vagrant:'Cutpurse', Mender:'Hedge Priest'};
+
+const BUILD = {
+  farm:    {name:'Farm',         icon:'🌾', cost:{wood:10},                    max:9, desc:'+6 food per season (×0.5 spring, ×1.5 autumn, 0 winter)'},
+  lumber:  {name:'Lumber Camp',  icon:'🪓', cost:{gold:10},                    max:9, desc:'+4 wood per season'},
+  quarry:  {name:'Quarry',       icon:'⛏️', cost:{wood:15},                    max:9, desc:'+3 stone per season'},
+  house:   {name:'House',        icon:'🏠', cost:{wood:10, stone:5},           max:9, desc:'Commoners pay +3 gold tax per season'},
+  market:  {name:'Market',       icon:'⚖️', cost:{wood:15, stone:10},          max:3, desc:'+5 gold per season · suitors bring smaller dowries'},
+  chapel:  {name:'Chapel',       icon:'⛪', cost:{wood:20, stone:15, gold:20}, max:1, desc:'Unlocks Mender · +fertility · slows natural death'},
+  barracks:{name:'Barracks',     icon:'🛡️', cost:{wood:20, stone:10, gold:15}, max:1, desc:'Unlocks Vagrant · +25% battle XP'},
+  tower:   {name:'Arcane Tower', icon:'🔮', cost:{wood:15, stone:25, gold:30}, max:1, desc:'Unlocks Arcanist'},
+};
+const TRAITS = {
+  'Iron Blood':  'Max HP +6',
+  'Arcane Spark':'Magic +3, starts battles with +1 AP',
+  'Swift':       'Move +1',
+  'Hawk Eye':    'Ranged attacks +1 range',
+  'Long-Lived':  'Natural death starts 10 years later',
+  'Sickly':      'Max HP −5, dies younger',
+};
+
+/* ---------------- STATE ---------------- */
+let G;
+function newGame(){
+  G = {year:1, season:0, nid:1, renown:0,
+       res:{food:30, wood:20, stone:10, gold:40},
+       bld:{farm:1, lumber:1, quarry:0, house:1, market:0, chapel:1, barracks:0, tower:0},
+       people:[], suitors:[], missions:[], log:[], tab:'family'};
+  const aldric = mkPerson({base:'Aldric', sex:'M', age:24, cls:'Warden', g:{vit:7,str:7,int:3,agi:4}});
+  const mira   = mkPerson({base:'Mira',   sex:'F', age:22, cls:'Mender', g:{vit:4,str:3,int:7,agi:5}});
+  const wren   = mkPerson({base:'Wren',   sex:'F', age:19, cls:'Ranger', g:{vit:4,str:5,int:4,agi:7}});
+  const corwin = mkPerson({base:'Corwin', sex:'M', age:17, cls:'Warden', g:{vit:6,str:6,int:2,agi:5}});
+  aldric.spouse = mira.id; mira.spouse = aldric.id;
+  G.people.push(aldric, mira, wren, corwin);
+  const tam = mkPerson({base:'Tam', sex:'M', age:3, parents:[mira.id, aldric.id], gen:2, g:{vit:6,str:5,int:5,agi:5}, apt:['Warden','Mender']});
+  G.people.push(tam);
+  G.people.forEach(p => p.name = p.base);
+  genMissions();
+  addLog('House Vale is founded in the valley. Year 1 begins.');
+}
+function mkPerson(o){
+  const p = Object.assign({id:G.nid++, sex:chance(.5)?'M':'F', age:20, cls:null, lv:{}, xp:{}, spouse:null,
+    parents:[], alive:true, gen:1, trait:null, wounded:0, apt:[], hair:pick(HAIR), death:null}, o);
+  if(!p.base) p.base = pick(p.sex==='M'?MN:FN);
+  if(!p.name) p.name = p.base;
+  if(!p.g) p.g = {vit:rnd(2,7), str:rnd(2,7), int:rnd(2,7), agi:rnd(2,7)};
+  p.born = G.year - p.age;
+  return p;
+}
+const byId = id => G.people.find(p => p.id === id) || G.suitors.find(p => p.id === id);
+const living = () => G.people.filter(p => p.alive);
+const lvl = p => p.cls ? (p.lv[p.cls] || 1) : 1;
+function addLog(t){ G.log.unshift(`Y${G.year} ${SEASONS[G.season].slice(0,3)}: ${t}`); G.log.length = Math.min(G.log.length, 60); }
+const roman = n => ['','I','II','III','IV','V','VI','VII','VIII','IX','X'][n] || n;
+
+/* ---------------- DYNASTY ---------------- */
+function stageOf(p){
+  if(p.age < 6) return 'Infant'; if(p.age < 14) return 'Child'; if(p.age < 16) return 'Youth';
+  if(p.age < 45) return 'Adult'; if(p.age < 60) return 'Veteran'; return 'Elder';
+}
+const canFight = p => p.alive && p.cls && p.age >= 14 && p.age < 60 && p.wounded <= 0;
+const canMarry = p => p.alive && p.age >= 16 && !p.spouse;
+function statsOf(p){
+  const c = CLASSES[p.cls], g = p.g, L = lvl(p);
+  const s = {hp:Math.round(c.hp + g.vit*1.5 + L*3), ap:AP_START,
+    atk:Math.round(c.atk + g.str*0.5 + L*0.8), def:Math.round(c.def + g.vit*0.3 + L*0.5),
+    mag:Math.round(c.mag + g.int*0.6 + L*0.8), spd:Math.round(c.spd + g.agi*0.3 + L*0.15),
+    move:c.move, jump:c.jump, rangeBonus:0};
+  if(p.age < 16){ ['hp','atk','def','mag'].forEach(k => s[k] = Math.round(s[k]*0.8)); }
+  else if(p.age >= 45){ s.spd -= 1; s.mag += 2; if(p.age >= 52) s.move = Math.max(3, s.move-1); }
+  if(p.trait==='Iron Blood') s.hp += 6;
+  if(p.trait==='Sickly') s.hp -= 5;
+  if(p.trait==='Arcane Spark'){ s.mag += 3; s.ap += 1; }
+  if(p.trait==='Swift') s.move += 1;
+  if(p.trait==='Hawk Eye') s.rangeBonus = 1;
+  return s;
+}
+function ancestors(p, depth){
+  const s = new Set();
+  (function rec(q, d){ if(!q || d > depth) return; q.parents.forEach(id => { s.add(id); rec(byId(id), d+1); }); })(p, 1);
+  return s;
+}
+function related(a, b){
+  const A = ancestors(a,2), Bs = ancestors(b,2);
+  if(A.has(b.id) || Bs.has(a.id)) return true;
+  for(const x of A) if(Bs.has(x)) return true;
+  return false;
+}
+function marry(a, b){
+  a.spouse = b.id; b.spouse = a.id;
+  if(G.suitors.includes(b)){ G.suitors = G.suitors.filter(s => s !== b); b.gen = a.gen; G.people.push(b); }
+  G.renown += 2;
+  addLog(`💍 ${a.name} married ${b.name}.`);
+}
+function inheritTrait(m, f){
+  const pt = [m.trait, f.trait].filter(Boolean);
+  if(pt.length && chance(.25)) return pick(pt);
+  if(chance(.06)) return pick(Object.keys(TRAITS));
+  return null;
+}
+function haveChild(mother, father){
+  const sex = chance(.5) ? 'M' : 'F';
+  let base = null;
+  const livingBases = new Set(living().map(p => p.base));
+  if(chance(.2)){ const anc = G.people.filter(p => p.sex === sex && !p.alive && !livingBases.has(p.base)); if(anc.length) base = pick(anc).base; }
+  if(!base){ const pool = (sex==='M' ? MN : FN).filter(n => !livingBases.has(n)); base = pick(pool.length ? pool : (sex==='M' ? MN : FN)); }
+  const g = {};
+  for(const k in mother.g) g[k] = clamp(Math.round((mother.g[k] + father.g[k])/2 + rnd(-2,3)), 0, 12);
+  const kid = mkPerson({sex, age:0, base, g, parents:[mother.id, father.id], gen:Math.max(mother.gen, father.gen)+1,
+    trait:inheritTrait(mother, father), apt:[...new Set([mother.cls, father.cls].filter(Boolean))],
+    hair:chance(.5) ? mother.hair : father.hair});
+  const same = G.people.filter(p => p.base === base).length;
+  kid.name = same ? `${base} ${roman(same+1)}` : base;
+  G.people.push(kid);
+  return kid;
+}
+function deathChance(p){
+  let start = 55 + (p.trait==='Long-Lived' ? 10 : 0) - (p.trait==='Sickly' ? 10 : 0);
+  if(p.age < start) return 0;
+  let c = (p.age - start + 1) * 0.005;
+  if(G.bld.chapel) c *= 0.75;
+  return c;
+}
+function kill(p, cause){
+  p.alive = false; p.death = {year:G.year, cause, age:p.age};
+  const sp = p.spouse && byId(p.spouse);
+  if(sp){ sp.spouse = null; sp.widowOf = p.id; }
+  addLog(`⚰️ ${p.name} died (${cause}) aged ${p.age}.`);
+}
+function genSuitor(){
+  const s = mkPerson({age:rnd(17,28), cls:pick(availableClasses()), g:{vit:rnd(2,9), str:rnd(2,9), int:rnd(2,9), agi:rnd(2,9)}});
+  if(chance(.08)) s.trait = pick(Object.keys(TRAITS).filter(t => t !== 'Sickly'));
+  const L = rnd(1, 2 + Math.floor(G.year/5)); s.lv[s.cls] = L;
+  s.dowry = Math.max(0, rnd(0, 25) + L*3 - G.bld.market*5);
+  s.stay = 2;
+  s.origin = pick(['a wandering knight','a merchant\'s child','a minor noble of House Ashby','a hunter from the hills','a scholar from the coast','a refugee from the north']);
+  return s;
+}
+function availableClasses(){ return Object.keys(CLASSES).filter(c => !CLASSES[c].need || G.bld[CLASSES[c].need]); }
+
+/* ---------------- ECONOMY / TIME ---------------- */
+function production(){
+  const b = G.bld;
+  return {food:Math.round(b.farm*6*FARM_MULT[G.season]), wood:b.lumber*4, stone:b.quarry*3, gold:b.market*5 + b.house*3};
+}
+function upkeep(){
+  let f = 0;
+  living().forEach(p => f += p.age < 14 ? 0.5 : 1);
+  if(G.season === 3) f *= 1.25;
+  return Math.ceil(f);
+}
+function canAfford(cost){ return Object.entries(cost).every(([k,v]) => G.res[k] >= v); }
+function pay(cost){ Object.entries(cost).forEach(([k,v]) => G.res[k] -= v); }
+const costStr = c => Object.entries(c).map(([k,v]) => `${v} ${k}`).join(', ');
+
+function endSeason(fromMission){
+  const ev = [];
+  // production & upkeep
+  const pr = production(); for(const k in pr) G.res[k] += pr[k];
+  const up = upkeep(); G.res.food -= up;
+  ev.push(`Produced ${Object.entries(pr).filter(e=>e[1]).map(([k,v])=>`+${v} ${k}`).join(', ') || 'nothing'}; ate ${up} food.`);
+  if(G.res.food < 0){
+    G.res.food = 0; ev.push('🍂 Famine! Your people go hungry.');
+    const weak = living().filter(p => p.age < 6 || p.age >= 60);
+    if(weak.length && chance(.5)){ const v = pick(weak); kill(v, 'starvation'); ev.push(`⚰️ ${v.name} starved.`); }
+  }
+  // wounds heal
+  living().forEach(p => { if(p.wounded > 0){ p.wounded--; if(!p.wounded) ev.push(`🩹 ${p.name} has recovered from wounds.`); } });
+  // births
+  living().filter(p => p.sex==='F' && p.spouse && p.age >= 16 && p.age <= 42).forEach(m => {
+    const f = byId(m.spouse); if(!f || !f.alive || f.sex !== 'M') return;
+    let c = 0.11 + (G.bld.chapel ? 0.05 : 0) + (G.season===0 ? 0.04 : 0);
+    if(G.people.filter(k => k.alive && k.parents.includes(m.id) && k.age < 2).length) c *= 0.4;
+    if(chance(c)){
+      const kid = haveChild(m, f);
+      ev.push(`👶 ${m.name} and ${f.name} welcomed a ${kid.sex==='M'?'son':'daughter'}, ${kid.name}${kid.trait?` (born with ${kid.trait}!)`:''}.`);
+      addLog(`👶 ${kid.name} born to ${m.name} & ${f.name}.`);
+    }
+  });
+  // natural death
+  living().forEach(p => { if(chance(deathChance(p))){ kill(p, 'old age'); ev.push(`⚰️ ${p.name} passed away peacefully at ${p.age}.`); } });
+  // suitors leave
+  G.suitors.forEach(s => s.stay--);
+  const left = G.suitors.filter(s => s.stay <= 0); G.suitors = G.suitors.filter(s => s.stay > 0);
+  if(left.length) ev.push(`${left.map(s=>s.name).join(', ')} left the valley, unwed.`);
+
+  // advance time
+  G.season++;
+  if(G.season > 3){
+    G.season = 0; G.year++;
+    G.people.forEach(p => { if(p.alive) p.age++; });
+    G.suitors.forEach(s => s.age++);
+    ev.push(`🎆 A new year — Year ${G.year}. Everyone grows a year older.`);
+    living().filter(p => p.age === 14).forEach(p => ev.push(`🎓 ${p.name} is now 14 and can choose a class.`));
+    living().filter(p => p.age === 16).forEach(p => ev.push(`🌹 ${p.name} came of age and may now marry.`));
+    living().filter(p => p.age === 60 && p.cls).forEach(p => ev.push(`🪑 ${p.name} retires from battle at 60 (Elder).`));
+  }
+  // new suitor
+  if(chance(G.season===2 ? 0.75 : 0.4)){
+    const s = genSuitor(); G.suitors.push(s);
+    ev.push(`💌 A suitor arrives: ${s.name}, ${s.origin} (${s.cls}, age ${s.age}).`);
+  }
+  genMissions();
+  // line ended?
+  if(!living().length){ save(); return modal('The Line Has Ended', `<p>House Vale is no more. It endured until Year ${G.year}.</p>`, [{t:'Start a new house', primary:true, f:()=>{newGame(); render();}}]); }
+  // raid
+  const raid = G.year >= 2 && G.season !== 3 && chance(0.13);
+  save(); render();
+  modal(`${SEASONS[G.season]}, Year ${G.year}`, `<ul>${ev.map(e=>`<li>${e}</li>`).join('')}</ul>`,
+    [{t: raid ? 'Continue…' : 'Continue', primary:true, f:() => { if(raid) raidEvent(); }}]);
+}
+function raidEvent(){
+  const m = {name:'Bandit Raid!', raid:true, diff:1 + Math.floor(G.year/4), enemies:3 + Math.min(3, Math.floor(G.year/5)),
+    reward:{gold:10}, renown:4, desc:'Bandits storm the outskirts of town.'};
+  const fighters = living().filter(canFight);
+  if(!fighters.length){
+    const loss = lose30(); addLog('Bandits raided the undefended town.');
+    return modal('Bandit Raid!', `<p>With no one able to fight, bandits loot the town: ${loss}.</p>`, [{t:'Ugh', primary:true}]);
+  }
+  modal('Bandit Raid!', `<p>Bandits are attacking the town! Choose up to 4 defenders. If you lose, they'll steal 30% of your resources.</p>${squadPicker()}`,
+    [{t:'Defend the town', primary:true, f:() => launch(m)}]);
+}
+function lose30(){
+  const parts = [];
+  for(const k of ['food','wood','stone','gold']){ const l = Math.floor(G.res[k]*0.3); G.res[k] -= l; if(l) parts.push(`${l} ${k}`); }
+  return parts.join(', ') || 'nothing of value';
+}
+function genMissions(){
+  const base = Math.floor(G.year/4);
+  const tpl = [
+    ['Clear the Old Mill', 'Brigands squat in the abandoned mill.', {food:20, gold:10}],
+    ['Hunt the Poachers', 'Poachers are emptying the royal woods.', {food:25, wood:10}],
+    ['Escort the Stone Cart', 'Bandits prey on the quarry road.', {stone:20, gold:10}],
+    ['Witch of the Fen', 'A hedge witch and her thugs threaten travellers.', {gold:30}],
+    ['Timber Feud', 'A rival camp claims your forest.', {wood:30}],
+    ['Hill Fort Assault', 'An outlaw band holds the old hill fort.', {gold:40, stone:15}],
+  ];
+  G.missions = [];
+  const used = new Set();
+  for(let i=0; i<3; i++){
+    let t; do { t = pick(tpl); } while(used.has(t[0])); used.add(t[0]);
+    const diff = base + i;
+    const mult = 1 + diff*0.35;
+    const reward = {}; for(const k in t[2]) reward[k] = Math.round(t[2][k]*mult);
+    G.missions.push({name:t[0], desc:t[1], diff, enemies:3 + Math.min(3, i + Math.floor(G.year/6)), reward, renown:3 + diff*2});
+  }
+}
+
+/* ---------------- SAVE ---------------- */
+function save(){ try{ localStorage.setItem('heirs_vale_save', JSON.stringify(G)); }catch(e){} }
+function load(){ try{ const s = localStorage.getItem('heirs_vale_save'); if(s){ G = JSON.parse(s); return true; } }catch(e){} return false; }
+
+/* ---------------- TOWN UI ---------------- */
+const TABS = [['family','Family'],['town','Town'],['lineage','Lineage'],['missions','Missions'],['log','Chronicle']];
+function render(){
+  $('#date').textContent = `${SEASONS[G.season]} · Year ${G.year}`;
+  const pr = production(), up = upkeep();
+  $('#res').innerHTML = `<span>🍞 ${G.res.food} <small class="muted">${pr.food-up>=0?'+':''}${pr.food-up}</small></span>
+    <span>🪵 ${G.res.wood} <small class="muted">+${pr.wood}</small></span><span>🪨 ${G.res.stone} <small class="muted">+${pr.stone}</small></span>
+    <span>🪙 ${G.res.gold} <small class="muted">+${pr.gold}</small></span><span>⭐ ${G.renown}</span>`;
+  $('#tabs').innerHTML = TABS.map(([k,l]) => `<button data-tab="${k}" class="${G.tab===k?'on':''}">${l}${k==='family'&&G.suitors.length?` 💌${G.suitors.length}`:''}</button>`).join('');
+  $('#log').textContent = G.log.slice(0,2).join('  ·  ');
+  const v = {family:viewFamily, town:viewTown, lineage:viewLineage, missions:viewMissions, log:viewLog}[G.tab];
+  $('#main').innerHTML = v();
+}
+function personCard(p, extra=''){
+  const st = p.cls && p.age >= 14 ? statsOf(p) : null;
+  const sp = p.spouse && byId(p.spouse);
+  const par = p.parents.map(byId).filter(Boolean).map(x => x.name).join(' & ');
+  return `<div class="card">
+    <h3>${p.sex==='M'?'♂':'♀'} ${p.name} <span class="muted">· ${p.age} · ${stageOf(p)}</span></h3>
+    <div class="row">
+      ${p.cls ? `<span class="tag" style="border-color:${CLASSES[p.cls].color}">${p.cls} Lv${lvl(p)}</span>` : '<span class="tag">No class</span>'}
+      ${p.trait ? `<span class="tag trait" title="${TRAITS[p.trait]}">✦ ${p.trait}</span>` : ''}
+      ${p.wounded ? `<span class="tag wound">Wounded ${p.wounded}s</span>` : ''}
+      ${sp ? `<span class="tag">♥ ${sp.name}</span>` : ''}
+    </div>
+    ${par ? `<div class="muted">Child of ${par}${p.apt.length?` · aptitude: ${p.apt.join(', ')}`:''}</div>` : ''}
+    ${st ? `<div class="stats"><span>HP <b>${st.hp}</b></span><span>ATK <b>${st.atk}</b></span><span>DEF <b>${st.def}</b></span><span>MAG <b>${st.mag}</b></span>
+      <span>SPD <b>${st.spd}</b></span><span>MOV <b>${st.move}</b></span><span>JMP <b>${st.jump}</b></span><span>AP <b>${st.ap}/${AP_MAX}</b></span></div>`
+      : `<div class="stats"><span>VIT <b>${p.g.vit}</b></span><span>STR <b>${p.g.str}</b></span><span>INT <b>${p.g.int}</b></span><span>AGI <b>${p.g.agi}</b></span></div>`}
+    ${extra}</div>`;
+}
+function viewFamily(){
+  const ppl = living().sort((a,b) => b.age - a.age);
+  const cards = ppl.map(p => {
+    let ex = '<div class="row">';
+    if(p.age >= 14 && p.age < 60){
+      ex += `<select data-cls="${p.id}"><option value="">${p.cls ? 'Change class…' : 'Choose class…'}</option>${availableClasses().filter(c=>c!==p.cls).map(c=>`<option value="${c}">${c}${p.lv[c]?` (Lv${p.lv[c]})`:''}${p.apt.includes(c)?' ★':''}</option>`).join('')}</select>`;
+    }
+    if(canMarry(p)) ex += `<button data-marry="${p.id}">💍 Marry…</button>`;
+    ex += '</div>';
+    return personCard(p, ex);
+  }).join('');
+  const suit = G.suitors.map(s => `<div class="card"><h3>💌 ${s.sex==='M'?'♂':'♀'} ${s.name} <span class="muted">· ${s.age}</span></h3>
+    <div class="muted">${s.origin} · ${s.cls} Lv${lvl(s)}${s.trait?` · ✦ ${s.trait}`:''} · dowry asked: ${s.dowry} gold · leaves in ${s.stay} season(s)</div>
+    <div class="stats"><span>VIT <b>${s.g.vit}</b></span><span>STR <b>${s.g.str}</b></span><span>INT <b>${s.g.int}</b></span><span>AGI <b>${s.g.agi}</b></span></div></div>`).join('');
+  return `<p class="muted">Your bloodline is your army. Children get the average of their parents' talents (±luck) and an aptitude ★ for their parents' classes (+50% XP). Kids choose a class at 14, marry at 16, retire at 60.</p>
+    <div class="grid">${cards}</div>
+    ${G.suitors.length ? `<h3 style="margin:14px 0 6px">Suitors visiting</h3><div class="grid">${suit}</div>` : ''}`;
+}
+function viewTown(){
+  return `<p class="muted">Buildings produce every season. Specialist buildings unlock new classes for your family.</p><div class="grid">` +
+    Object.entries(BUILD).map(([k,b]) => {
+      const n = G.bld[k], full = n >= b.max;
+      return `<div class="card"><h3>${b.icon} ${b.name} <span class="muted">× ${n}</span></h3>
+        <div class="muted">${b.desc}</div>
+        <div class="row" style="margin-top:6px"><button data-build="${k}" ${full || !canAfford(b.cost) ? 'disabled' : ''}>${full ? 'Built' : 'Build · ' + costStr(b.cost)}</button></div></div>`;
+    }).join('') + '</div>';
+}
+function viewLineage(){
+  const all = G.people.slice();
+  const gens = {};
+  all.forEach(p => (gens[p.gen] = gens[p.gen] || []).push(p));
+  return `<p class="muted">Every soul of House Vale, by generation. ♥ marks spouses; faded entries have died.</p>` +
+    Object.keys(gens).sort((a,b)=>a-b).map(g => `<div class="gen"><h4>Generation ${g}</h4><div class="tree">` +
+      gens[g].map(p => {
+        const sp = p.spouse ? byId(p.spouse) : (p.widowOf ? byId(p.widowOf) : null);
+        const par = p.parents.map(byId).filter(Boolean).map(x=>x.name).join(' & ');
+        return `<div class="chip ${p.alive?'':'dead'}" style="--c:${p.cls?CLASSES[p.cls].color:'#777'}">
+          <b>${p.name}</b> ${p.alive ? `(${p.age})` : `✝ Y${p.death.year}, ${p.death.cause}`}<br>
+          <span class="muted">${p.cls||'—'}${sp?` · ♥ ${sp.name}`:''}${par?` · of ${par}`:''}</span></div>`;
+      }).join('') + '</div></div>').join('');
+}
+function squadPicker(){
+  const f = living().filter(canFight);
+  return `<div class="squad">${f.map((p,i) => { const s = statsOf(p);
+    return `<label><input type="checkbox" class="sq" value="${p.id}" ${i<4?'checked':''}> <span><b>${p.name}</b> — ${p.cls} Lv${lvl(p)}, age ${p.age} · HP ${s.hp}</span></label>`; }).join('')}</div>
+    <p class="muted">Pick 1–4. Fallen family members may die for good.</p>`;
+}
+function viewMissions(){
+  const f = living().filter(canFight);
+  return `<p class="muted">A mission takes the whole season. Rewards scale with difficulty. Units at 0 HP: 45% die, 35% wounded, 20% recover.</p><div class="grid">` +
+    G.missions.map((m,i) => `<div class="card"><h3>⚔️ ${m.name}</h3><div class="muted">${m.desc}</div>
+      <div class="row" style="margin:6px 0"><span class="tag">Difficulty ${'★'.repeat(m.diff+1)}</span><span class="tag">${m.enemies} foes</span><span class="tag">+${m.renown} ⭐</span></div>
+      <div class="muted">Reward: ${costStr(m.reward)}</div>
+      <div class="row" style="margin-top:6px"><button class="primary" data-mission="${i}" ${f.length?'':'disabled'}>Choose squad…</button></div></div>`).join('') + '</div>';
+}
+function viewLog(){ return `<div class="card">${G.log.map(l => `<div style="padding:3px 0;border-bottom:1px solid var(--line)">${l}</div>`).join('')}</div>`; }
+
+/* modal */
+function modal(title, html, buttons){
+  $('#mbox').innerHTML = `<h2>${title}</h2><div>${html}</div><div class="btns">${buttons.map((b,i)=>`<button data-mb="${i}" class="${b.primary?'primary':''}">${b.t}</button>`).join('')}</div>`;
+  $('#modal').style.display = 'flex';
+  $('#mbox').querySelectorAll('[data-mb]').forEach(el => el.onclick = () => {
+    const b = buttons[+el.dataset.mb];
+    if(b.keep && b.f){ b.f(); return; }
+    // read squad before closing
+    const sq = [...$('#mbox').querySelectorAll('.sq:checked')].map(c => +c.value);
+    window._lastSquad = sq;
+    $('#modal').style.display = 'none';
+    b.f && b.f();
+  });
+}
+function marryDialog(p){
+  const cands = [
+    ...G.suitors.map(s => ({s, label:`💌 ${s.name} (${s.sex}, ${s.age}, ${s.cls}${s.trait?', ✦'+s.trait:''}) — dowry ${s.dowry}g`, cost:s.dowry})),
+    ...living().filter(q => q !== p && canMarry(q) && !related(p, q)).map(q => ({s:q, label:`🏠 ${q.name} (${q.sex}, ${q.age}, ${q.cls||'no class'}) — distant kin`, cost:0})),
+  ];
+  if(!cands.length) return modal('No match', '<p>No suitors are visiting and no unrelated family members are free. Suitors arrive most often in Autumn.</p>', [{t:'OK', primary:true}]);
+  modal(`Marry ${p.name}`, `<p class="muted">Children are only born to a husband & wife. Close kin (siblings, first cousins) can't wed.</p>
+    <select id="mcand" style="width:100%">${cands.map((c,i)=>`<option value="${i}">${c.label}</option>`).join('')}</select>`,
+    [{t:'Cancel'}, {t:'Wed', primary:true, keep:true, f:() => {
+      const c = cands[+$('#mcand').value];
+      if(G.res.gold < c.cost){ $('#mcand').insertAdjacentHTML('afterend', '<p style="color:var(--bad)">Not enough gold for the dowry.</p>'); return; }
+      G.res.gold -= c.cost; marry(p, c.s); $('#modal').style.display = 'none'; save(); render();
+      modal('A Wedding!', `<p>${p.name} and ${c.s.name} are wed. ${G.suitors.includes(c.s)?'':`${c.s.name} joins House Vale.`}</p>`, [{t:'Huzzah!', primary:true}]);
+    }}]);
+}
+document.addEventListener('click', e => {
+  const t = e.target.closest('button'); if(!t) return;
+  if(t.dataset.tab){ G.tab = t.dataset.tab; render(); }
+  else if(t.dataset.build){ const k = t.dataset.build; const b = BUILD[k]; if(canAfford(b.cost)){ pay(b.cost); G.bld[k]++; addLog(`🔨 Built a ${b.name}.`); save(); render(); } }
+  else if(t.dataset.marry){ marryDialog(byId(+t.dataset.marry)); }
+  else if(t.dataset.mission){ const m = G.missions[+t.dataset.mission];
+    modal(m.name, `<p>${m.desc}</p>${squadPicker()}`, [{t:'Cancel'}, {t:'March out!', primary:true, f:() => launch(m)}]); }
+});
+document.addEventListener('change', e => {
+  const s = e.target.closest('select[data-cls]'); if(!s || !s.value) return;
+  const p = byId(+s.dataset.cls); p.cls = s.value; p.lv[p.cls] = p.lv[p.cls] || 1;
+  addLog(`${p.name} trains as a ${p.cls}.`); save(); render();
+});
+$('#endSeason').onclick = () => endSeason();
+
+/* =========================================================
+   BATTLE — isometric height grid, CT turn order, facing
+   ========================================================= */
+const TW = 64, TH = 32, HZ = 14, N = 10;
+const DIRS = [[1,0],[0,1],[-1,0],[0,-1]];      // ↘ ↙ ↖ ↗ on screen
+const TERRAIN = {
+  grass: {top:'#6fae55', l:'#4d7d3a', r:'#3e6930'},
+  forest:{top:'#4f8f45', l:'#3b6b33', r:'#2f5729'},
+  stone: {top:'#a39d8f', l:'#7a7468', r:'#655f55'},
+  sand:  {top:'#d9c47e', l:'#a8955a', r:'#8e7d4a'},
+  water: {top:'#4a8fd0', l:'#2f6aa3', r:'#275a8b'},
+};
+let B = null, ctx, cv, dpr = 1;
+const tweens = [];
+function tween(ms, fn){ return new Promise(res => tweens.push({t0:performance.now(), ms, fn, res})); }
+const iso = (x, y, h) => ({x:(x-y)*TW/2, y:(x+y)*TH/2 - h*HZ});
+const inMap = (x, y) => x >= 0 && y >= 0 && x < N && y < N;
+const tile = (x, y) => B.map[y*N + x];
+const unitAt = (x, y) => B.units.find(u => u.alive && u.x === x && u.y === y);
+const manh = (a, b) => Math.abs(a.x-b.x) + Math.abs(a.y-b.y);
+
+function genMap(){
+  const bumps = Array.from({length:5}, () => ({x:rnd(0,N-1), y:rnd(0,N-1), r:rnd(2,4), a:rnd(1,3)}));
+  const lake = {x:rnd(2,7), y:rnd(2,7)};
+  const map = [];
+  for(let y=0; y<N; y++) for(let x=0; x<N; x++){
+    let v = 0.7; bumps.forEach(b => { const d = Math.hypot(x-b.x, y-b.y); v += Math.max(0, b.a*(1 - d/b.r)); });
+    let h = clamp(Math.round(v), 1, 5), t = h >= 4 ? 'stone' : 'grass';
+    const dl = Math.hypot(x-lake.x, y-lake.y);
+    if(dl < 1.6){ h = 0; t = 'water'; } else if(dl < 2.4 && h <= 1){ t = 'sand'; }
+    if(t === 'grass' && chance(.1)) t = 'forest';
+    map.push({x, y, h, t});
+  }
+  return map;
+}
+function mkUnit(o){
+  const c = CLASSES[o.cls];
+  const u = Object.assign({id:Math.random(), face:0, ct:0, alive:true, ox:0, oy:0, lift:0, flash:0, alpha:1, xpGain:0, kills:0, moved:false, acted:false,
+    rmin:c.rmin, rmax:c.rmax}, o);
+  u.hpMax = u.hp; u.restedBonus = false; u.vx = u.x; u.vy = u.y;
+  return u;
+}
+function launch(m){
+  const ids = (window._lastSquad || []).slice(0, 4);
+  const squad = ids.map(byId).filter(p => p && canFight(p));
+  if(!squad.length){ return modal('No squad', '<p>Select at least one fighter.</p>', [{t:'OK', primary:true}]); }
+  startBattle(m, squad);
+}
+function startBattle(mission, squad){
+  const map = genMap();
+  B = {mission, map, units:[], fx:[], parts:[], proj:null, mode:'idle', hl:null, sel:null, over:false, shake:0, cam:{x:0,y:0,s:1}, turnN:0};
+  const pS = [[1,8],[0,7],[2,9],[0,9]], eS = [[8,1],[9,2],[7,0],[9,0],[8,3],[6,1]];
+  [...pS, ...eS].forEach(([x,y]) => { const t = tile(x,y); if(t.t === 'water'){ t.t = 'grass'; t.h = 1; } });
+  squad.forEach((p, i) => {
+    const s = statsOf(p), [x,y] = pS[i];
+    B.units.push(mkUnit({p, name:p.name, cls:p.cls, team:'P', x, y, face:3, hair:p.hair, ...s, rmax:CLASSES[p.cls].rmax + (CLASSES[p.cls].rmax>1?s.rangeBonus:0), ct:rnd(0,30)}));
+  });
+  const eCls = ['Warden','Ranger','Warden','Vagrant','Arcanist','Ranger'];
+  for(let i=0; i<mission.enemies; i++){
+    const cls = i < 2 ? eCls[i] : pick(['Warden','Ranger','Vagrant','Arcanist','Warden']);
+    const L = Math.max(1, mission.diff + rnd(0,1));
+    const fake = {cls, g:{vit:rnd(3,6), str:rnd(3,6), int:rnd(3,6), agi:rnd(3,6)}, lv:{[cls]:L}, age:30, trait:null};
+    const s = statsOf(fake), [x,y] = eS[i];
+    B.units.push(mkUnit({name:ENEMY_NAMES[cls], cls, team:'E', x, y, face:1, hair:pick(HAIR), ...s, ct:rnd(0,30)}));
+  }
+  B.units.forEach(u => u.vh = tile(u.x,u.y).h);
+  $('#battle').style.display = 'block';
+  setupCanvas(); fitCamera();
+  requestAnimationFrame(loop);
+  runBattle();
+}
+
+/* --- grid queries --- */
+function reach(u){
+  const key = (x,y) => x + ',' + y, dist = new Map([[key(u.x,u.y), 0]]), prev = new Map(), q = [[u.x,u.y]];
+  while(q.length){
+    q.sort((a,b) => dist.get(key(...a)) - dist.get(key(...b)));
+    const [x,y] = q.shift(), d = dist.get(key(x,y)), ct = tile(x,y);
+    for(const [dx,dy] of DIRS){
+      const nx = x+dx, ny = y+dy; if(!inMap(nx,ny)) continue;
+      const t = tile(nx,ny); if(Math.abs(t.h - ct.h) > u.jump) continue;
+      const occ = unitAt(nx,ny); if(occ && occ.team !== u.team) continue;
+      const nd = d + (t.t === 'water' ? 2 : 1); if(nd > u.move) continue;
+      const k = key(nx,ny); if(!dist.has(k) || nd < dist.get(k)){ dist.set(k, nd); prev.set(k, key(x,y)); q.push([nx,ny]); }
+    }
+  }
+  const tiles = []; dist.forEach((d,k) => { const [x,y] = k.split(',').map(Number); const o = unitAt(x,y); if(!o || o === u) tiles.push({x,y}); });
+  return {tiles, prev, key};
+}
+function pathTo(r, u, x, y){
+  const path = []; let k = r.key(x,y);
+  while(k && k !== r.key(u.x,u.y)){ const [px,py] = k.split(',').map(Number); path.unshift({x:px, y:py}); k = r.prev.get(k); }
+  return path;
+}
+function targetTiles(u, sk){
+  const rmin = sk ? sk.rmin : u.rmin, base = sk ? sk.rmax : u.rmax, out = [], h0 = tile(u.x,u.y).h;
+  const ranged = base > 1 && (!sk || sk.type === 'phys');
+  for(const t of B.map){
+    const d = manh(u, t), dh = h0 - t.h;
+    let rmax = base + (ranged ? Math.max(0, Math.floor(dh/2)) + (sk ? u.rangeBonus||0 : 0) : 0);
+    if(d < rmin || d > rmax) continue;
+    if(base <= 1 && Math.abs(dh) > 3) continue;
+    out.push({x:t.x, y:t.y});
+  }
+  return out;
+}
+const area = (x, y, r) => B.map.filter(t => Math.abs(t.x-x) + Math.abs(t.y-y) <= r).map(t => ({x:t.x, y:t.y}));
+function affected(u, tx, ty, sk){
+  const tiles = sk && sk.aoe ? area(tx, ty, sk.aoe) : [{x:tx, y:ty}];
+  const us = tiles.map(t => unitAt(t.x, t.y)).filter(Boolean);
+  if(sk && sk.aoe) return us;
+  if(sk && sk.type === 'heal') return us.filter(v => v.team === u.team);
+  return us.filter(v => v.team !== u.team);
+}
+function relSide(a, t){
+  const dx = a.x - t.x, dy = a.y - t.y, f = DIRS[t.face];
+  const dot = dx*f[0] + dy*f[1], cr = Math.abs(dx*f[1] - dy*f[0]);
+  if(dot > 0 && dot >= cr) return 'front';
+  if(dot < 0 && -dot >= cr) return 'back';
+  return 'side';
+}
+function forecast(a, t, sk){
+  const type = sk ? sk.type : 'phys';
+  if(type === 'heal') return {heal:Math.round(a.mag*sk.power + 6), hit:100};
+  const side = relSide(a, t), dh = tile(a.x,a.y).h - tile(t.x,t.y).h;
+  let base = type === 'mag' ? a.mag*sk.power*1.6 - t.mag*0.3 - t.def*0.2 : a.atk*(sk ? sk.power : 1)*1.6 - t.def;
+  let mult = 1 + 0.05*Math.max(0, dh);
+  if(side === 'side') mult *= 1.1; if(side === 'back') mult *= 1.25;
+  if(sk && sk.backMult && side === 'back') mult *= sk.backMult;
+  let hit = type === 'mag' ? 95 : 88 - (t.spd - 6)*2 + (side === 'side' ? 10 : side === 'back' ? 25 : 0) + (sk && sk.hitMod || 0);
+  if(tile(t.x,t.y).t === 'forest' && type !== 'mag') hit -= 10;
+  return {dmg:Math.max(1, Math.round(base*mult)), hit:clamp(Math.round(hit), 5, 100), side, dh};
+}
+
+/* --- turn queue (CT) --- */
+function nextTurn(){
+  for(let guard=0; guard<1000; guard++){
+    const ready = B.units.filter(u => u.alive && u.ct >= 100);
+    if(ready.length){ ready.sort((a,b) => b.ct - a.ct || b.spd - a.spd); return ready[0]; }
+    B.units.forEach(u => { if(u.alive) u.ct += u.spd; });
+  }
+}
+function predictOrder(n){
+  const sim = B.units.filter(u => u.alive).map(u => ({u, ct:u.ct})), out = [];
+  if(B.active && B.active.alive){ out.push(B.active); const s = sim.find(x => x.u === B.active); if(s) s.ct = 0; }
+  while(out.length < n){
+    const ready = sim.filter(s => s.ct >= 100);
+    if(ready.length){ ready.sort((a,b) => b.ct - a.ct || b.u.spd - a.u.spd); out.push(ready[0].u); ready[0].ct -= 100; }
+    else sim.forEach(s => s.ct += s.u.spd);
+  }
+  return out;
+}
+function renderTurnBar(){
+  $('#turnbar').innerHTML = predictOrder(8).map((u,i) => `<div class="tb ${u.team} ${i===0?'now':''}" style="color:${CLASSES[u.cls].color}">${u.name.slice(0,2)}</div>`).join('');
+}
+
+/* --- main battle loop --- */
+async function runBattle(){
+  await sleep(400);
+  msg(`<b>${B.mission.name}</b> — defeat all foes!`); await sleep(1200);
+  while(!B.over){
+    const u = nextTurn(); B.active = u; u.moved = false; u.acted = false;
+    u.ap = Math.min(AP_MAX, u.ap + 1 + (u.restedBonus ? 1 : 0));
+    renderTurnBar(); showCard(u);
+    if(u.team === 'P') await playerTurn(u); else await aiTurn(u);
+    u.ct = (u.moved ? 0 : 15) + (u.acted ? 0 : 15);
+    u.restedBonus = !u.acted;
+    B.hl = null; B.sel = null;
+    checkEnd();
+  }
+}
+function checkEnd(){
+  if(B.over) return;
+  const p = B.units.some(u => u.team === 'P' && u.alive), e = B.units.some(u => u.team === 'E' && u.alive);
+  if(!e || !p){ B.over = true; setTimeout(() => endBattle(!e), 700); }
+}
+
+/* --- player input --- */
+function playerTurn(u){
+  return new Promise(res => { B.endTurn = res; B.mode = 'menu'; menu(u); msg(`${u.name}'s turn`); });
+}
+function menu(u){
+  B.mode = 'menu'; B.hl = null; B.sel = null;
+  const sk = CLASSES[u.cls].skill;
+  $('#cmd').innerHTML = `
+    <button data-c="move" ${u.moved?'disabled':''}>🦶 Move</button>
+    <button data-c="atk" ${u.acted?'disabled':''}>⚔️ Attack</button>
+    <button data-c="skill" ${u.acted||u.ap<sk.ap?'disabled':''}>✨ ${sk.name} <small>${'◆'.repeat(sk.ap)}</small></button>
+    <button data-c="wait">⏳ ${u.moved||u.acted?'End turn':'Wait'}</button>`;
+}
+function cancelBtn(){ return `<button data-c="cancel">↩ Back</button>`; }
+$('#cmd').addEventListener('click', async e => {
+  const b = e.target.closest('button'); if(!b || !B) return;
+  const u = B.active, c = b.dataset.c;
+  if(c === 'move'){ B.mode = 'move'; B.reach = reach(u); B.hl = {tiles:B.reach.tiles, color:'#5aa0ff'}; $('#cmd').innerHTML = cancelBtn(); msg('Tap a blue tile to move'); }
+  else if(c === 'atk' || c === 'skill'){
+    const sk = c === 'skill' ? CLASSES[u.cls].skill : null;
+    B.mode = 'target'; B.skill = sk; B.hl = {tiles:targetTiles(u, sk), color:sk && sk.type==='heal' ? '#5fd38a' : '#ff6a5a'};
+    $('#cmd').innerHTML = cancelBtn(); msg(sk ? `${sk.name}: ${sk.desc}. Tap a target.` : 'Tap an enemy in range');
+  }
+  else if(c === 'cancel'){ menu(u); msg(`${u.name}'s turn`); }
+  else if(c === 'confirm'){ await confirmAction(); }
+  else if(c === 'wait'){ facingMode(u); }
+  else if(c && c.startsWith('f')){ u.face = +c.slice(1); }
+  else if(c === 'done'){ B.mode = 'idle'; $('#cmd').innerHTML = ''; hideMsg(); B.endTurn(); }
+});
+function facingMode(u){
+  B.mode = 'face'; B.hl = null;
+  $('#cmd').innerHTML = `<div class="muted" style="text-align:center">Choose facing<br><small>(attacks from behind hurt!)</small></div>
+    <div class="facepad"><button data-c="f2">↖</button><button data-c="f3">↗</button><button data-c="f1">↙</button><button data-c="f0">↘</button></div>
+    <button data-c="done" class="primary">✔ End turn</button>`;
+  msg('Set facing, then End turn');
+}
+async function onTap(wx, wy){
+  if(!B || B.over) return;
+  const t = pickTile(wx, wy);
+  if(!t){ return; }
+  const u = B.active, occ = unitAt(t.x, t.y);
+  if(B.mode === 'move' && u.team === 'P'){
+    if(!B.hl.tiles.some(h => h.x === t.x && h.y === t.y)) return;
+    if(t.x === u.x && t.y === u.y){ menu(u); return; }
+    const path = pathTo(B.reach, u, t.x, t.y);
+    B.mode = 'busy'; B.hl = null; $('#cmd').innerHTML = '';
+    await moveAlong(u, path); u.moved = true;
+    if(u.acted) facingMode(u); else { menu(u); msg(`${u.name}'s turn`); }
+  } else if(B.mode === 'target'){
+    if(!B.hl.tiles.some(h => h.x === t.x && h.y === t.y)) return;
+    const sk = B.skill, hits = affected(u, t.x, t.y, sk);
+    if(!hits.length){ msg('No valid target there'); return; }
+    if(B.sel && B.sel.x === t.x && B.sel.y === t.y){ await confirmAction(); return; }
+    B.sel = {x:t.x, y:t.y, tiles: sk && sk.aoe ? area(t.x, t.y, sk.aoe) : [{x:t.x, y:t.y}]};
+    const parts = hits.map(h => { const f = forecast(u, h, sk);
+      return f.heal ? `${h.name}: +${f.heal} HP` : `${h.team===u.team?'⚠️ ':''}${h.name}: ${f.dmg} dmg, ${f.hit}%${f.side!=='front'?` <b style="color:var(--warn)">${f.side.toUpperCase()}</b>`:''}${f.dh>0?' ⛰️':''}`; });
+    msg(parts.join('<br>') + '<br><small>Tap again or Confirm</small>');
+    $('#cmd').innerHTML = `<button data-c="confirm" class="primary">✔ Confirm</button>${cancelBtn()}`;
+  } else if(B.mode === 'face' && Math.abs(t.x-u.x) + Math.abs(t.y-u.y) > 0){
+    const dx = t.x - u.x, dy = t.y - u.y;
+    u.face = Math.abs(dx) >= Math.abs(dy) ? (dx > 0 ? 0 : 2) : (dy > 0 ? 1 : 3);
+  } else if(occ){ showCard(occ); setTimeout(() => showCard(B.active), 2500); }
+}
+async function confirmAction(){
+  const u = B.active, s = B.sel; if(!s) return;
+  B.mode = 'busy'; B.hl = null; $('#cmd').innerHTML = ''; hideMsg();
+  await doAction(u, s.x, s.y, B.skill); B.sel = null;
+  checkEnd(); if(B.over) { B.endTurn(); return; }
+  if(u.moved) facingMode(u); else { menu(u); msg(`${u.name}'s turn`); }
+}
+
+/* --- actions & animation --- */
+function faceToward(u, x, y){
+  const dx = x - u.x, dy = y - u.y; if(!dx && !dy) return;
+  u.face = Math.abs(dx) >= Math.abs(dy) ? (dx > 0 ? 0 : 2) : (dy > 0 ? 1 : 3);
+}
+async function moveAlong(u, path){
+  for(const st of path){
+    const fx = u.x, fy = u.y, fh = tile(fx,fy).h, th = tile(st.x,st.y).h;
+    faceToward(u, st.x, st.y);
+    const arc = 5 + Math.abs(th - fh)*HZ*0.7;
+    await tween(th !== fh ? 230 : 160, t => {
+      u.vx = lerp(fx, st.x, t); u.vy = lerp(fy, st.y, t); u.vh = lerp(fh, th, t); u.lift = Math.sin(Math.PI*t)*arc;
+    });
+    u.x = st.x; u.y = st.y; u.lift = 0;
+  }
+}
+function scrDir(d){ const v = DIRS[d]; const x = (v[0]-v[1])*TW/2, y = (v[0]+v[1])*TH/2, l = Math.hypot(x,y); return {x:x/l, y:y/l}; }
+function float(u, text, color){ const p = iso(u.x, u.y, tile(u.x,u.y).h); B.fx.push({x:p.x, y:p.y-40, text, color, t0:performance.now()}); }
+function burst(x, y, color, n=18){
+  const p = iso(x, y, tile(x,y).h);
+  for(let i=0; i<n; i++) B.parts.push({x:p.x+rnd(-14,14), y:p.y-rnd(0,20), vx:(Math.random()-.5)*1.5, vy:-Math.random()*2-0.5, color, t0:performance.now(), life:600+rnd(0,400)});
+}
+async function doAction(u, tx, ty, sk){
+  const targets = affected(u, tx, ty, sk);
+  u.acted = true; if(sk) u.ap -= sk.ap;
+  faceToward(u, tx, ty);
+  const type = sk ? sk.type : 'phys';
+  const ranged = type === 'phys' && (sk ? sk.rmax : u.rmax) > 1;
+  if(sk) { float(u, sk.name, '#fff'); await sleep(350); }
+  if(type === 'mag' || type === 'heal'){
+    await tween(300, t => u.lift = Math.sin(Math.PI*t)*6);
+    const tiles = sk.aoe ? area(tx, ty, sk.aoe) : [{x:tx, y:ty}];
+    tiles.forEach(t => burst(t.x, t.y, type === 'heal' ? '#9effb0' : pick(['#ff9a3c','#ffd23c','#ff5a2a'])));
+    await sleep(300);
+  } else if(ranged){
+    const a = iso(u.x, u.y, tile(u.x,u.y).h), b = iso(tx, ty, tile(tx,ty).h);
+    B.proj = {ax:a.x, ay:a.y-26, bx:b.x, by:b.y-20, t:0};
+    await tween(280, t => B.proj.t = t); B.proj = null;
+  } else {
+    const d = scrDir(u.face);
+    await tween(110, t => { u.ox = d.x*12*t; u.oy = d.y*12*t; });
+    await tween(110, t => { u.ox = d.x*12*(1-t); u.oy = d.y*12*(1-t); });
+  }
+  for(const v of targets){
+    const f = forecast(u, v, sk);
+    if(f.heal){ v.hp = Math.min(v.hpMax, v.hp + f.heal); float(v, '+' + f.heal, '#7dffa0'); u.xpGain += 10; continue; }
+    if(Math.random()*100 < f.hit){
+      v.hp -= f.dmg; float(v, f.dmg + (f.side==='back'?'!':''), f.side==='back' ? '#ffd23c' : '#fff');
+      if(f.side === 'back' || f.dmg > 15) B.shake = 8;
+      if(sk && sk.delay) v.ct = Math.max(0, v.ct - sk.delay);
+      if(v.team !== u.team) u.xpGain += 10;
+      const kd = scrDir(u.face); v.flash = 1;
+      tween(220, t => { v.ox = kd.x*6*Math.sin(Math.PI*t); v.oy = kd.y*6*Math.sin(Math.PI*t); v.flash = 1 - t; });
+      if(v.hp <= 0){ v.hp = 0; v.alive = false; if(v.team !== u.team){ u.kills++; u.xpGain += 20; } tween(400, t => v.alpha = 1 - t*0.5); float(v, 'KO', '#ff6a5a'); }
+    } else float(v, 'MISS', '#9ab');
+  }
+  showCard(B.active); renderTurnBar();
+  await sleep(550);
+}
+
+/* --- enemy AI --- */
+async function aiTurn(u){
+  msg(`${u.name}'s turn`);
+  await sleep(350);
+  const r = reach(u), sk = CLASSES[u.cls].skill, ox = u.x, oy = u.y;
+  const foes = B.units.filter(v => v.alive && v.team !== u.team);
+  let best = null;
+  for(const st of r.tiles){
+    u.x = st.x; u.y = st.y;
+    for(const s of [null, (u.ap >= sk.ap && sk.type !== 'heal') ? sk : null]){
+      if(s === undefined) continue;
+      for(const tt of targetTiles(u, s)){
+        const hits = affected(u, tt.x, tt.y, s); if(!hits.length) continue;
+        let score = 0;
+        for(const v of hits){ const f = forecast(u, v, s); const ev = f.dmg*f.hit/100;
+          if(v.team === u.team) score -= ev*1.5; else score += ev + (f.dmg >= v.hp ? 25 : 0); }
+        const near = Math.min(...foes.map(v => manh(st, v)));
+        if(u.rmax > 1 || u.cls === 'Arcanist') score += near*0.8;
+        if(s) score -= 2;
+        if(!best || score > best.score) best = {score, st, tt, s};
+      }
+    }
+  }
+  u.x = ox; u.y = oy;
+  if(best && best.score > 0){
+    if(best.st.x !== u.x || best.st.y !== u.y){ await moveAlong(u, pathTo(r, u, best.st.x, best.st.y)); u.moved = true; }
+    await doAction(u, best.tt.x, best.tt.y, best.s);
+  } else {
+    let tgt = null, bd = 1e9;
+    for(const st of r.tiles){ const d = Math.min(...foes.map(v => manh(st, v))); if(d < bd){ bd = d; tgt = st; } }
+    if(tgt && (tgt.x !== u.x || tgt.y !== u.y)){ await moveAlong(u, pathTo(r, u, tgt.x, tgt.y)); u.moved = true; }
+  }
+  const alive = B.units.filter(v => v.alive && v.team !== u.team);
+  if(alive.length){ let n = alive[0]; alive.forEach(v => { if(manh(u,v) < manh(u,n)) n = v; }); faceToward(u, n.x, n.y); }
+  await sleep(250);
+}
+
+/* --- end of battle --- */
+function endBattle(win){
+  const m = B.mission, lines = [];
+  const xpMult = G.bld.barracks ? 1.25 : 1;
+  B.units.filter(u => u.team === 'P').forEach(u => {
+    const p = u.p;
+    if(!u.alive){
+      const r = Math.random();
+      if(r < 0.45){ kill(p, `fell at ${m.name}`); lines.push(`⚰️ <b>${p.name}</b> has died.`); return; }
+      if(r < 0.8){ p.wounded = 2; lines.push(`🩸 ${p.name} is gravely wounded (out 2 seasons).`); }
+      else lines.push(`😮‍💨 ${p.name} was knocked out but recovers.`);
+    }
+    let xp = Math.round((u.xpGain + (win ? 20 : 5)) * xpMult * (p.apt.includes(p.cls) ? 1.5 : 1));
+    p.xp[p.cls] = (p.xp[p.cls] || 0) + xp;
+    let ups = 0; while(p.xp[p.cls] >= 100){ p.xp[p.cls] -= 100; p.lv[p.cls] = lvl(p) + 1; ups++; }
+    lines.push(`${p.name}: +${xp} XP${ups ? ` — <b style="color:var(--gold)">Level up! Lv${lvl(p)}</b>` : ''}${u.kills ? ` · ${u.kills} KO` : ''}`);
+  });
+  let head;
+  if(win){
+    for(const k in m.reward) G.res[k] += m.reward[k];
+    G.renown += m.renown;
+    head = `Victory! Rewards: ${costStr(m.reward)}, +${m.renown} ⭐`;
+    addLog(`⚔️ Victory at ${m.name}.`);
+  } else {
+    head = m.raid ? `Defeat… the bandits loot ${lose30()}.` : 'Defeat… your squad retreats.';
+    addLog(`⚔️ Defeat at ${m.name}.`);
+  }
+  B.done = true;
+  $('#battle').style.display = 'none';
+  save(); render();
+  modal(win ? '⚔️ Victory!' : '💀 Defeat', `<p>${head}</p><ul>${lines.map(l=>`<li>${l}</li>`).join('')}</ul>`,
+    [{t: m.raid ? 'Return to town' : 'Return (season ends)', primary:true, f:() => { B = null; if(!m.raid) endSeason(true); }}]);
+}
+
+/* --- UI helpers --- */
+function msg(h){ const m = $('#msg'); m.innerHTML = h; m.style.display = 'block'; }
+function hideMsg(){ $('#msg').style.display = 'none'; }
+function showCard(u){
+  if(!B || !u) return;
+  const p = u.p, c = CLASSES[u.cls];
+  $('#ucard').innerHTML = `<div class="nm" style="color:${u.team==='P'?'var(--accent)':'var(--bad)'}">${u.name}</div>
+    <div class="muted">${u.cls} · ${c.desc}${p ? ` · age ${p.age}` : ''}</div>
+    <div>HP ${u.hp}/${u.hpMax}</div><div class="bar"><i style="width:${u.hp/u.hpMax*100}%;background:#6fd07a"></i></div>
+    <div>AP <span style="color:var(--gold);letter-spacing:2px">${'◆'.repeat(u.ap)}${'◇'.repeat(AP_MAX-u.ap)}</span></div>
+    <div class="muted">ATK ${u.atk} DEF ${u.def} MAG ${u.mag} SPD ${u.spd} MOV ${u.move} JMP ${u.jump}</div>
+    ${p && p.parents.length ? `<div class="muted">Child of ${p.parents.map(byId).filter(Boolean).map(x=>x.name).join(' & ')}</div>` : ''}`;
+}
+
+/* --- canvas / camera / input --- */
+function setupCanvas(){
+  cv = $('#cv'); ctx = cv.getContext('2d');
+  dpr = window.devicePixelRatio || 1;
+  cv.width = innerWidth*dpr; cv.height = innerHeight*dpr;
+}
+function fitCamera(){
+  const W = innerWidth, H = innerHeight;
+  const minX = iso(0, N-1, 0).x - TW/2, maxX = iso(N-1, 0, 0).x + TW/2;
+  const minY = iso(0, 0, 5).y - TH, maxY = iso(N-1, N-1, 0).y + TH/2 + 12;
+  const availW = W - 150 - 10, availH = H - 50 - 20;
+  const s = Math.min(availW/(maxX-minX), availH/(maxY-minY), 1.6);
+  B.cam.s = s;
+  B.cam.x = 10 + (availW - (maxX-minX)*s)/2 - minX*s;
+  B.cam.y = 50 + (availH - (maxY-minY)*s)/2 - minY*s;
+}
+addEventListener('resize', () => { if(B && !B.done){ setupCanvas(); fitCamera(); } });
+function toWorld(sx, sy){ return {x:(sx - B.cam.x)/B.cam.s, y:(sy - B.cam.y)/B.cam.s}; }
+function pickTile(wx, wy){
+  const order = B.map.slice().sort((a,b) => (b.x+b.y) - (a.x+a.y) || b.h - a.h);
+  for(const t of order){ const c = iso(t.x, t.y, t.h); if(Math.abs(wx-c.x)/(TW/2) + Math.abs(wy-c.y)/(TH/2) <= 1) return t; }
+  return null;
+}
+(function input(){
+  const ptrs = new Map(); let start = null, panned = false, pinch0 = null;
+  const el = $('#cv');
+  el.addEventListener('pointerdown', e => { el.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, {x:e.clientX, y:e.clientY});
+    if(ptrs.size === 1){ start = {x:e.clientX, y:e.clientY, cx:B.cam.x, cy:B.cam.y}; panned = false; }
+    if(ptrs.size === 2){ const [a,b] = [...ptrs.values()]; pinch0 = {d:Math.hypot(a.x-b.x, a.y-b.y), s:B.cam.s, cx:B.cam.x, cy:B.cam.y, mx:(a.x+b.x)/2, my:(a.y+b.y)/2}; panned = true; } });
+  el.addEventListener('pointermove', e => { if(!ptrs.has(e.pointerId)) return; ptrs.set(e.pointerId, {x:e.clientX, y:e.clientY});
+    if(ptrs.size === 2 && pinch0){ const [a,b] = [...ptrs.values()]; const s = clamp(pinch0.s * Math.hypot(a.x-b.x, a.y-b.y)/pinch0.d, 0.4, 3);
+      B.cam.x = pinch0.mx - (pinch0.mx - pinch0.cx)*s/pinch0.s; B.cam.y = pinch0.my - (pinch0.my - pinch0.cy)*s/pinch0.s; B.cam.s = s; }
+    else if(start){ const dx = e.clientX - start.x, dy = e.clientY - start.y; if(Math.hypot(dx,dy) > 8) panned = true; if(panned){ B.cam.x = start.cx + dx; B.cam.y = start.cy + dy; } } });
+  const up = e => { ptrs.delete(e.pointerId);
+    if(ptrs.size === 0){ if(!panned && start){ const w = toWorld(e.clientX, e.clientY); onTap(w.x, w.y); } start = null; pinch0 = null; } };
+  el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
+  el.addEventListener('wheel', e => { e.preventDefault(); const s = clamp(B.cam.s * (e.deltaY < 0 ? 1.1 : 0.9), 0.4, 3);
+    B.cam.x = e.clientX - (e.clientX - B.cam.x)*s/B.cam.s; B.cam.y = e.clientY - (e.clientY - B.cam.y)*s/B.cam.s; B.cam.s = s; }, {passive:false});
+})();
+
+/* --- rendering --- */
+function loop(now){
+  if(!B || B.done) return;
+  for(let i = tweens.length-1; i >= 0; i--){ const tw = tweens[i]; const t = Math.min(1, (now - tw.t0)/tw.ms); tw.fn(t); if(t >= 1){ tweens.splice(i,1); tw.res(); } }
+  draw(now);
+  requestAnimationFrame(loop);
+}
+function draw(now){
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0, 0, innerWidth, innerHeight);
+  const sh = B.shake > 0 ? (B.shake *= 0.85, (Math.random()-.5)*B.shake) : 0;
+  ctx.translate(B.cam.x + sh, B.cam.y + sh*0.5); ctx.scale(B.cam.s, B.cam.s);
+  const hl = new Map(); if(B.hl) B.hl.tiles.forEach(t => hl.set(t.x+','+t.y, B.hl.color));
+  const sel = new Set(B.sel ? B.sel.tiles.map(t => t.x+','+t.y) : []);
+  const pulse = 0.35 + 0.15*Math.sin(now/200);
+  for(let s = 0; s < 2*N-1; s++){
+    for(let x = 0; x < N; x++){ const y = s - x; if(y < 0 || y >= N) continue;
+      drawTile(tile(x,y), hl.get(x+','+y), sel.has(x+','+y), pulse, now); }
+    B.units.filter(u => !u.alive && Math.round(u.vx)+Math.round(u.vy) === s).forEach(u => drawUnit(u, now));
+    B.units.filter(u => u.alive && Math.round(u.vx)+Math.round(u.vy) === s).forEach(u => drawUnit(u, now));
+  }
+  if(B.proj){ const p = B.proj, t = p.t, x = lerp(p.ax, p.bx, t), y = lerp(p.ay, p.by, t) - Math.sin(Math.PI*t)*30;
+    const t2 = Math.max(0, t-0.08), x2 = lerp(p.ax, p.bx, t2), y2 = lerp(p.ay, p.by, t2) - Math.sin(Math.PI*t2)*30;
+    ctx.strokeStyle = '#f4e3b0'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(x2, y2); ctx.lineTo(x, y); ctx.stroke(); }
+  B.parts = B.parts.filter(p => now - p.t0 < p.life);
+  B.parts.forEach(p => { const a = 1 - (now - p.t0)/p.life; p.x += p.vx; p.y += p.vy; p.vy += 0.03;
+    ctx.globalAlpha = a; ctx.fillStyle = p.color; ctx.fillRect(p.x-2, p.y-2, 4, 4); });
+  ctx.globalAlpha = 1;
+  B.fx = B.fx.filter(f => now - f.t0 < 1100);
+  B.fx.forEach(f => { const t = (now - f.t0)/1100; const bounce = t < 0.3 ? -Math.sin(t/0.3*Math.PI)*14 : 0;
+    ctx.globalAlpha = t > 0.7 ? (1 - t)/0.3 : 1; ctx.font = 'bold 16px system-ui'; ctx.textAlign = 'center';
+    ctx.lineWidth = 3; ctx.strokeStyle = '#000'; ctx.strokeText(f.text, f.x, f.y - t*18 + bounce);
+    ctx.fillStyle = f.color; ctx.fillText(f.text, f.x, f.y - t*18 + bounce); });
+  ctx.globalAlpha = 1;
+}
+function poly(pts, fill){ ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]); for(let i=1;i<pts.length;i++) ctx.lineTo(pts[i][0], pts[i][1]); ctx.closePath(); ctx.fillStyle = fill; ctx.fill(); }
+function drawTile(t, hlc, isSel, pulse, now){
+  const c = iso(t.x, t.y, t.h), col = TERRAIN[t.t], dep = t.h*HZ + 10;
+  const T = [c.x, c.y - TH/2], R = [c.x + TW/2, c.y], Bt = [c.x, c.y + TH/2], L = [c.x - TW/2, c.y];
+  poly([L, Bt, [Bt[0], Bt[1]+dep], [L[0], L[1]+dep]], col.l);
+  poly([Bt, R, [R[0], R[1]+dep], [Bt[0], Bt[1]+dep]], col.r);
+  let top = col.top;
+  if(t.t === 'water'){ const w = Math.sin(now/500 + t.x + t.y)*10; top = `rgb(${74+w},${143+w},${208+w})`; }
+  poly([T, R, Bt, L], top);
+  ctx.strokeStyle = 'rgba(0,0,0,.18)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(...T); ctx.lineTo(...R); ctx.lineTo(...Bt); ctx.lineTo(...L); ctx.closePath(); ctx.stroke();
+  if(t.t === 'forest'){ ctx.fillStyle = '#5a3d22'; ctx.fillRect(c.x+12, c.y-12, 3, 8); ctx.fillStyle = '#2f6e2a';
+    ctx.beginPath(); ctx.moveTo(c.x+13.5, c.y-26); ctx.lineTo(c.x+22, c.y-10); ctx.lineTo(c.x+5, c.y-10); ctx.fill(); }
+  if(hlc){ ctx.globalAlpha = pulse; poly([T, R, Bt, L], hlc); ctx.globalAlpha = 1; }
+  if(isSel){ ctx.globalAlpha = 0.6 + 0.2*Math.sin(now/120); poly([T, R, Bt, L], '#ffe066'); ctx.globalAlpha = 1; }
+}
+function drawUnit(u, now){
+  const p = iso(u.vx, u.vy, u.vh), c = CLASSES[u.cls];
+  const x = p.x + u.ox, gy = p.y + u.oy;
+  ctx.globalAlpha = 0.3; ctx.fillStyle = '#000'; ctx.beginPath(); ctx.ellipse(x, gy, 13, 6, 0, 0, 7); ctx.fill(); ctx.globalAlpha = 1;
+  // team ring
+  ctx.strokeStyle = u.team === 'P' ? '#7fb2ff' : '#ff6a5a'; ctx.lineWidth = B.active === u ? 2.5 : 1.5;
+  ctx.beginPath(); ctx.ellipse(x, gy, 14, 7, 0, 0, 7); ctx.stroke();
+  if(!u.alive){ ctx.globalAlpha = u.alpha; ctx.fillStyle = '#666'; ctx.fillRect(x-12, gy-7, 18, 7); ctx.fillStyle = '#c9a98a';
+    ctx.beginPath(); ctx.arc(x+10, gy-4, 5, 0, 7); ctx.fill(); ctx.globalAlpha = 1; return; }
+  // facing arrow on ground
+  const d = scrDir(u.face); ctx.fillStyle = u.team === 'P' ? '#7fb2ff' : '#ff6a5a';
+  ctx.beginPath(); ctx.moveTo(x + d.x*22, gy + d.y*11); ctx.lineTo(x + d.x*14 - d.y*6, gy + d.y*7 + d.x*3); ctx.lineTo(x + d.x*14 + d.y*6, gy + d.y*7 - d.x*3); ctx.fill();
+  const bob = Math.sin(now/280 + u.id*10)*1.2, y = gy - u.lift + bob;
+  const front = d.y > 0, flip = d.x < 0 ? -1 : 1;
+  ctx.save(); ctx.translate(x, y); ctx.scale(flip, 1);
+  const body = u.flash > 0.5 ? '#fff' : (u.team === 'E' ? ENEMY_COLOR[u.cls] : c.color);
+  // legs
+  ctx.fillStyle = '#3a2f2a'; ctx.fillRect(-6, -8, 4, 8); ctx.fillRect(2, -8, 4, 8);
+  // weapon behind if facing away
+  const weapon = () => {
+    ctx.lineWidth = 2.5;
+    if(u.cls === 'Warden'){ ctx.strokeStyle = '#ddd'; ctx.beginPath(); ctx.moveTo(9, -14); ctx.lineTo(16, -32); ctx.stroke(); ctx.fillStyle = '#8a6a3a'; ctx.beginPath(); ctx.arc(-9, -16, 6, 0, 7); ctx.fill(); ctx.strokeStyle = '#d9b45a'; ctx.lineWidth = 1.5; ctx.stroke(); }
+    if(u.cls === 'Ranger'){ ctx.strokeStyle = '#8a5a2a'; ctx.beginPath(); ctx.arc(10, -18, 10, -1.3, 1.3); ctx.stroke(); ctx.strokeStyle = '#eee'; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(12, -28); ctx.lineTo(12, -8); ctx.stroke(); }
+    if(u.cls === 'Arcanist'){ ctx.strokeStyle = '#6a4a2a'; ctx.beginPath(); ctx.moveTo(11, -2); ctx.lineTo(11, -36); ctx.stroke(); ctx.fillStyle = `hsl(${(now/10)%360},90%,65%)`; ctx.beginPath(); ctx.arc(11, -38, 3.5, 0, 7); ctx.fill(); }
+    if(u.cls === 'Mender'){ ctx.strokeStyle = '#e8e0c0'; ctx.beginPath(); ctx.moveTo(11, -2); ctx.lineTo(11, -36); ctx.moveTo(7, -32); ctx.lineTo(15, -32); ctx.stroke(); }
+    if(u.cls === 'Vagrant'){ ctx.strokeStyle = '#ccc'; ctx.beginPath(); ctx.moveTo(9, -14); ctx.lineTo(15, -22); ctx.stroke(); }
+  };
+  if(!front) weapon();
+  // body (tunic)
+  ctx.fillStyle = body; ctx.beginPath(); ctx.moveTo(-8, -6); ctx.lineTo(8, -6); ctx.lineTo(6, -22); ctx.lineTo(-6, -22); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.fillRect(-7, -12, 14, 2);
+  // head
+  ctx.fillStyle = u.flash > 0.5 ? '#fff' : '#f1c9a0'; ctx.beginPath(); ctx.arc(0, -29, 8, 0, 7); ctx.fill();
+  ctx.fillStyle = u.hair;
+  if(front){ ctx.beginPath(); ctx.arc(0, -31, 8.5, Math.PI*1.05, Math.PI*1.95); ctx.fill(); ctx.fillStyle = '#222'; ctx.fillRect(1, -29, 2, 3); ctx.fillRect(5, -29, 2, 3); }
+  else { ctx.beginPath(); ctx.arc(0, -29.5, 8.5, 0, 7); ctx.fill(); }
+  if(u.cls === 'Arcanist'){ ctx.fillStyle = '#4a2f80'; ctx.beginPath(); ctx.moveTo(-10, -33); ctx.lineTo(10, -33); ctx.lineTo(2, -50); ctx.closePath(); ctx.fill(); }
+  if(u.team === 'E' && u.cls !== 'Arcanist'){ ctx.fillStyle = '#5a1f1f'; ctx.fillRect(-8, -36, 16, 4); }
+  if(front) weapon();
+  ctx.restore();
+  // hp bar
+  ctx.fillStyle = '#000a'; ctx.fillRect(x-12, y-48, 24, 4);
+  ctx.fillStyle = u.hp/u.hpMax > 0.5 ? '#6fd07a' : u.hp/u.hpMax > 0.25 ? '#f0c060' : '#ff6a5a'; ctx.fillRect(x-12, y-48, 24*u.hp/u.hpMax, 4);
+  // AP pips
+  for(let i = 0; i < AP_MAX; i++){ const px = x - 10 + i*5, py = y - 52;
+    ctx.fillStyle = i < u.ap ? '#e3b54f' : '#0008'; ctx.beginPath(); ctx.moveTo(px, py-2); ctx.lineTo(px+2, py); ctx.lineTo(px, py+2); ctx.lineTo(px-2, py); ctx.fill(); }
+}
+
+/* ---------------- BOOT ---------------- */
+if(!load()) {
+  newGame();
+  render();
+  modal('Heirs of the Vale', `<p>You lead <b>House Vale</b>. Your family is your army.</p>
+    <ul><li><b>Town</b>: build to grow resources and unlock classes.</li>
+    <li><b>Family</b>: marry suitors, raise children, choose classes. Everyone ages each year.</li>
+    <li><b>Missions</b>: isometric tactics. Use height, facing and turn order. The fallen may die forever.</li>
+    <li><b>End Season</b> advances time: harvests, births, deaths, suitors and raids.</li></ul>
+    <p class="muted">Prototype — saved in this browser.</p>`, [{t:'Begin', primary:true}]);
+} else render();
+</script>
+</body>
+</html>
